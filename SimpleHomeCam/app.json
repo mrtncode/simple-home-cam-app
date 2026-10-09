@@ -27,8 +27,7 @@
     "plugins": [
       "expo-router",
       "./plugins/withReolinkInsecureHttps",
-      [
-        "expo-splash-screen",
+      ["expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
