@@ -13,6 +13,7 @@ type ReolinkTransportOptions = {
   host: string;
   username: string;
   password: string;
+  channel: number;
   port: number;
   https: boolean;
   timeoutMs: number;
@@ -88,9 +89,16 @@ export class ReolinkTransport {
     command: ReolinkCommand,
     authenticated: boolean,
   ): Promise<T> {
+    const requestCommand: ReolinkCommand = {
+      ...command,
+      param: {
+        channel: this.options.channel,
+        ...command.param,
+      },
+    };
     const url = new URL(this.baseUrl);
 
-    url.searchParams.set('cmd', command.cmd);
+    url.searchParams.set('cmd', requestCommand.cmd);
 
     if (authenticated && this.token) {
       url.searchParams.set('token', this.token);
@@ -103,13 +111,14 @@ export class ReolinkTransport {
       this.options.timeoutMs,
     );
 
+    console.log("Sending Reolink command:", requestCommand, "URL:", url.toString() + "Channel and IP:", this.options.host, "Port:", this.options.port, "HTTPS:", this.options.https, "channel", requestCommand.param.channel);
     try {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify([command]),
+        body: JSON.stringify([requestCommand]),
         signal: controller.signal,
       });
 

@@ -1,16 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddCamera, CameraConnection } from '@/components/modal/AddCamera';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { loadCameraSettings, saveCameraSettings } from '@/utils/cameraSettings';
+import { ReolinkClient } from '@/utils/reolink';
 
 export default function HomeScreen() {
   const [addCameraVisible, setAddCameraVisible] = useState(false);
   const [camera, setCamera] = useState<CameraConnection | null>(null);
 
+  useEffect(() => {
+    loadCameraSettings().then((settings) => {
+      if (settings) {
+        setCamera({ ...settings, client: new ReolinkClient(settings) });
+      }
+    });
+  }, []);
+
   const handleAddCamera = async (connection: CameraConnection) => {
+    await saveCameraSettings(connection);
     setCamera(connection);
     setAddCameraVisible(false);
   };

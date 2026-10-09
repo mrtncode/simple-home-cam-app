@@ -20,6 +20,7 @@ export class ReolinkClient {
       host: options.host,
       username: options.username,
       password: options.password,
+      channel,
       port: options.port ?? (options.https ? 443 : 80),
       https: options.https ?? false,
       timeoutMs: options.timeoutMs ?? 10_000,
