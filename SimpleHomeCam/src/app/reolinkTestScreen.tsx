@@ -17,6 +17,7 @@ import {
   ReolinkClient,
 } from '../utils/reolink';
 import { loadCameraSettings } from '../utils/cameraSettings';
+import { CameraStream } from '@/components/CameraScreen';
 
 export function ReolinkTestScreen() {
   const [presets, setPresets] = useState<PtzPreset[]>([]);
@@ -149,6 +150,8 @@ export function ReolinkTestScreen() {
         <Text style={styles.subtitle}>
           API playground
         </Text>
+
+        <CameraStream />
 
         {loading && (
           <View style={styles.loading}>
