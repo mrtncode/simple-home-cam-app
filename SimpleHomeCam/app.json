@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.martydev3753.SimpleHomeCam"
+      "package": "com.mrtncode.SimpleHomeCam"
     },
     "web": {
       "output": "static",
@@ -27,8 +27,7 @@
     "plugins": [
       "expo-router",
       "./plugins/withReolinkInsecureHttps",
-      [
-        "expo-splash-screen",
+      ["expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
