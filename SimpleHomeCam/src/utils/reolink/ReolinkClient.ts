@@ -46,4 +46,8 @@ export class ReolinkClient {
       channel,
     );
   }
+
+  async logout(): Promise<void> {
+    await this.transport.logout();
+  }
 }
