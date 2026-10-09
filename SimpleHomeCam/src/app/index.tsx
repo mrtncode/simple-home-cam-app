@@ -268,6 +268,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
+  logoutButton: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 3,
+  },
+  logoutButtonText: {
+    color: '#e08a7a',
+    fontSize: 14,
+    fontWeight: '800',
+  },
   footerNote: {
     marginTop: 'auto',
     paddingTop: 28,
