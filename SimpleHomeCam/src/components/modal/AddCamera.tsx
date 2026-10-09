@@ -14,13 +14,10 @@ import {
 } from 'react-native';
 
 import { ReolinkClient } from '@/utils/reolink';
+import { SavedCameraSettings } from '@/utils/cameraSettings';
 
-export type CameraConnection = {
+export type CameraConnection = SavedCameraSettings & {
 	client: ReolinkClient;
-	host: string;
-	username: string;
-	https: boolean;
-	port: number;
 };
 
 type AddCameraProps = {
@@ -81,6 +78,7 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 				password,
 				port: parsedPort,
 				https,
+				channel: 0,
 			});
 
 			await client.detection.getState();
@@ -88,8 +86,10 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 				client,
 				host: normalizedHost,
 				username: username.trim(),
+				password,
 				https,
 				port: parsedPort,
+				channel: 0,
 			});
 			reset();
 		} catch (connectionError) {

@@ -16,12 +16,7 @@ import {
   PtzPreset,
   ReolinkClient,
 } from '../utils/reolink';
-
-const camera = new ReolinkClient({
-  host: '192.168.178.0',
-  username: 'admin',
-  password: 'your-password',
-});
+import { loadCameraSettings } from '../utils/cameraSettings';
 
 export function ReolinkTestScreen() {
   const [presets, setPresets] = useState<PtzPreset[]>([]);
@@ -31,6 +26,16 @@ export function ReolinkTestScreen() {
 
   const [loading, setLoading] = useState(false);
   const [sirenEnabled, setSirenEnabled] = useState(false);
+
+  const getSavedClient = async () => {
+    const settings = await loadCameraSettings();
+
+    if (!settings) {
+      throw new Error('Add a camera before using the controls.');
+    }
+
+    return new ReolinkClient(settings);
+  };
 
   const run = useCallback(async (action: () => Promise<void>) => {
     try {
@@ -50,6 +55,7 @@ export function ReolinkTestScreen() {
 
   const loadPresets = useCallback(async () => {
     await run(async () => {
+      const camera = await getSavedClient();
       const result = await camera.ptz.getPresets();
       setPresets(result);
     });
@@ -57,6 +63,7 @@ export function ReolinkTestScreen() {
 
   const loadLight = useCallback(async () => {
     await run(async () => {
+      const camera = await getSavedClient();
       const result = await camera.light.get();
       setLight(result);
     });
@@ -64,6 +71,7 @@ export function ReolinkTestScreen() {
 
   const loadDetection = useCallback(async () => {
     await run(async () => {
+      const camera = await getSavedClient();
       const result = await camera.detection.getState();
       setDetection(result);
     });
@@ -88,6 +96,7 @@ export function ReolinkTestScreen() {
 
     await run(async () => {
       const enabled = !light.enabled;
+      const camera = await getSavedClient();
 
       await camera.light.set({
         enabled,
@@ -103,6 +112,7 @@ export function ReolinkTestScreen() {
 
   const changeBrightness = async (brightness: number) => {
     await run(async () => {
+      const camera = await getSavedClient();
       await camera.light.set({
         brightness,
       });
@@ -122,6 +132,7 @@ export function ReolinkTestScreen() {
     const nextValue = !sirenEnabled;
 
     await run(async () => {
+      const camera = await getSavedClient();
       await camera.siren.set(nextValue);
       setSirenEnabled(nextValue);
     });
@@ -164,9 +175,10 @@ export function ReolinkTestScreen() {
                 key={preset.id}
                 title={`Go to ${preset.name} (#${preset.id})`}
                 onPress={() =>
-                  run(() =>
-                    camera.ptz.gotoPreset(preset.id),
-                  )
+                  run(async () => {
+                    const camera = await getSavedClient();
+                    await camera.ptz.gotoPreset(preset.id);
+                  })
                 }
               />
             ))
