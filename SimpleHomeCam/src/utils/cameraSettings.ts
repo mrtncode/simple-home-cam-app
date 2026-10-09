@@ -19,6 +19,10 @@ export async function saveCameraSettings(
   );
 }
 
+export async function clearCameraSettings(): Promise<void> {
+  await SecureStore.deleteItemAsync(CAMERA_SETTINGS_KEY);
+}
+
 export async function loadCameraSettings(): Promise<SavedCameraSettings | null> {
   const value = await SecureStore.getItemAsync(CAMERA_SETTINGS_KEY);
 

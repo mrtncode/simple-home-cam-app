@@ -41,6 +41,26 @@ export class ReolinkTransport {
     return this.send<T>(command, true);
   }
 
+  async logout(): Promise<void> {
+    if (!this.token) {
+      return;
+    }
+
+    try {
+      await this.send<unknown>(
+        {
+          cmd: 'Logout',
+          action: 0,
+          param: {},
+        },
+        true,
+      );
+    } finally {
+      this.token = null;
+      this.tokenExpiresAt = 0;
+    }
+  }
+
   private async login(): Promise<void> {
     const command: ReolinkCommand = {
       cmd: 'Login',

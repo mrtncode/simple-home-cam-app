@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddCamera, CameraConnection } from '@/components/modal/AddCamera';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { loadCameraSettings, saveCameraSettings } from '@/utils/cameraSettings';
+import {
+  clearCameraSettings,
+  loadCameraSettings,
+  saveCameraSettings,
+} from '@/utils/cameraSettings';
 import { ReolinkClient } from '@/utils/reolink';
 
 export default function HomeScreen() {
@@ -24,6 +28,24 @@ export default function HomeScreen() {
     await saveCameraSettings(connection);
     setCamera(connection);
     setAddCameraVisible(false);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Log out',
+      'Remove this camera and its saved credentials from this device?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log out',
+          style: 'destructive',
+          onPress: async () => {
+            await clearCameraSettings();
+            setCamera(null);
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -50,6 +72,9 @@ export default function HomeScreen() {
               <View style={styles.cardDivider} />
               <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]} onPress={() => setAddCameraVisible(true)}>
                 <Text style={styles.secondaryButtonText}>Replace camera</Text>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]} onPress={handleLogout}>
+                <Text style={styles.logoutButtonText}>Log out</Text>
               </Pressable>
             </View>
           ) : (
