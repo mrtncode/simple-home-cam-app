@@ -27,6 +27,9 @@ export default function AppTabs() {
           <TabTrigger name="explore" href="/explore" asChild>
             <TabButton>Explore</TabButton>
           </TabTrigger>
+          <TabTrigger name="reolinkTestScreen" href="/reolinkTestScreen" asChild>
+            <TabButton>Camera Test</TabButton>
+          </TabTrigger>
         </CustomTabList>
       </TabList>
     </Tabs>

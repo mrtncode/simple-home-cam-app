@@ -18,7 +18,7 @@ import {
 } from '../utils/reolink';
 
 const camera = new ReolinkClient({
-  host: '192.168.178.50',
+  host: '192.168.178.0',
   username: 'admin',
   password: 'your-password',
 });
@@ -283,6 +283,8 @@ export function ReolinkTestScreen() {
     </SafeAreaView>
   );
 }
+
+export default ReolinkTestScreen;
 
 type SectionProps = {
   title: string;
