@@ -1,4 +1,4 @@
-/* import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -6,22 +6,23 @@ import {
   Text,
   View,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import WebView, { type WebViewProps } from 'react-native-webview';
 
 import { loadCameraSettings } from '@/utils/cameraSettings';
-import { streamHtml } from '@/assets/stream-webview';
+import streamHtml from '@/assets/stream-webview.html';
 
 const { width } = Dimensions.get('window');
 const VIDEO_HEIGHT = (width * 9) / 16; 
 
-export function CameraStream() {
-import WebView, { type WebViewProps } from 'react-native-webview';
-  const [error, setError] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<string>('Warte auf Initialisierung...');
-  const webViewRef = useRef<WebView>(null);
 const TypedWebView = WebView as unknown as React.ComponentType<
   WebViewProps & React.RefAttributes<WebView>
 >;
+
+export function CameraStream() {
+  const [error, setError] = useState<string | null>(null);
+  const [debugLog, setDebugLog] = useState<string>('Warte auf Initialisierung...');
+  const [cameraFlvUrl, setCameraFlvUrl] = useState<string | null>(null);
+  const webViewRef = useRef<WebView>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -78,7 +79,7 @@ const TypedWebView = WebView as unknown as React.ComponentType<
         });
 
         const streamUrl = `${protocol}://${cameraHost}/flv?${params.toString()}`;
-        setDebugLog(`Stream-URL bereitgestellt.`);
+        setDebugLog(`Stream-URL bereitgestellt. URL: ${streamUrl}`);
         
         if (mounted) {
           setCameraFlvUrl(streamUrl);
@@ -128,13 +129,12 @@ const TypedWebView = WebView as unknown as React.ComponentType<
   return (
     <View style={styles.container}>
       <View style={[styles.videoContainer, { height: VIDEO_HEIGHT }]}>
-        <WebView
+        <TypedWebView
           ref={webViewRef}
           originWhitelist={['*']}
-          source={{ html: streamHtml }}
+          source={streamHtml as any}
           style={styles.webview}
           allowsInlineMediaPlayback={true}
-        <TypedWebView
           javaScriptEnabled={true}
           domStorageEnabled={true}
           mixedContentMode="always"
@@ -145,19 +145,22 @@ const TypedWebView = WebView as unknown as React.ComponentType<
             }
           }}
           onReceivedSslError={(event) => {
-              event.nativeEvent.handler.proceed(); 
+            console.warn('SSL-Error in WebView:', event.nativeEvent.description);
+            if (event.preventDefault) {
+              event.preventDefault(); 
+            }
           }}
           onMessage={(event) => {
-              const msg = event.nativeEvent.data;
-              if (msg.startsWith('WEBVIEW_LOG: ')) {
-                setDebugLog(msg.replace('WEBVIEW_LOG: ', ''));
-              } else {
-                setError(msg);
-              }
+            const msg = event.nativeEvent.data;
+            if (msg.startsWith('WEBVIEW_LOG: ')) {
+              setDebugLog(msg.replace('WEBVIEW_LOG: ', ''));
+            } else {
+              setError(msg);
+            }
           }}
           onError={(syntheticEvent) => {
-              const { nativeEvent } = syntheticEvent;
-              setDebugLog(`WebView-Core-Fehler: ${nativeEvent.description}`);
+            const { nativeEvent } = syntheticEvent;
+            setDebugLog(`WebView-Core-Fehler: ${nativeEvent.description}`);
           }}
         />
       </View>
@@ -178,4 +181,3 @@ const styles = StyleSheet.create({
   error: { padding: 16, color: '#c0392b', textAlign: 'center', fontWeight: 'bold' },
   debugText: { color: '#aaa', fontSize: 12, textAlign: 'center', paddingHorizontal: 20 },
 });
- */
