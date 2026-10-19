@@ -14,9 +14,8 @@ import {
   DetectionState,
   LightState,
   PtzPreset,
-  ReolinkClient,
 } from '../utils/reolink';
-import { loadCameraSettings } from '../utils/cameraSettings';
+import { getCameraClient } from '../utils/cameraSettings';
 import { CameraStream } from '@/components/CameraScreen';
 
 export function ReolinkTestScreen() {
@@ -29,13 +28,13 @@ export function ReolinkTestScreen() {
   const [sirenEnabled, setSirenEnabled] = useState(false);
 
   const getSavedClient = async () => {
-    const settings = await loadCameraSettings();
+    const camera = await getCameraClient();
 
-    if (!settings) {
+    if (!camera) {
       throw new Error('Add a camera before using the controls.');
     }
 
-    return new ReolinkClient(settings);
+    return camera;
   };
 
   const run = useCallback(async (action: () => Promise<void>) => {

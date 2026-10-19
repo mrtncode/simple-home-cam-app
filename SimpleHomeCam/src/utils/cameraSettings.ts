@@ -1,8 +1,16 @@
 import * as SecureStore from 'expo-secure-store';
+import { ReolinkClient } from './reolink';
 
 import { ReolinkClientOptions } from './reolink';
 
 const CAMERA_SETTINGS_KEY = 'simple-home-cam.camera-settings';
+let cachedClient: ReolinkClient | null = null;
+let cachedSettings: string | null = null;
+
+function clearCachedClient(): void {
+  cachedClient = null;
+  cachedSettings = null;
+}
 
 export type SavedCameraSettings = Required<
   Pick<ReolinkClientOptions, 'host' | 'username' | 'password' | 'port' | 'https'>
@@ -13,6 +21,7 @@ export type SavedCameraSettings = Required<
 export async function saveCameraSettings(
   settings: SavedCameraSettings,
 ): Promise<void> {
+  clearCachedClient();
   await SecureStore.setItemAsync(
     CAMERA_SETTINGS_KEY,
     JSON.stringify(settings),
@@ -20,7 +29,24 @@ export async function saveCameraSettings(
 }
 
 export async function clearCameraSettings(): Promise<void> {
+  clearCachedClient();
   await SecureStore.deleteItemAsync(CAMERA_SETTINGS_KEY);
+}
+
+export async function getCameraClient(): Promise<ReolinkClient | null> {
+  const settings = await loadCameraSettings();
+  if (!settings) {
+    clearCachedClient();
+    return null;
+  }
+
+  const settingsKey = JSON.stringify(settings);
+  if (!cachedClient || cachedSettings !== settingsKey) {
+    cachedClient = new ReolinkClient(settings);
+    cachedSettings = settingsKey;
+  }
+
+  return cachedClient;
 }
 
 export async function loadCameraSettings(): Promise<SavedCameraSettings | null> {

@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CameraStream } from '@/components/CameraScreen';
 import { DetectionState, LightState, PtzPreset, ReolinkClient } from '@/utils/reolink';
-import { loadCameraSettings } from '@/utils/cameraSettings';
+import { getCameraClient, loadCameraSettings } from '@/utils/cameraSettings';
 
 const colors = {
   canvas: '#f5f3ed',
@@ -35,9 +35,9 @@ export default function SimpleViewScreen() {
   const [loading, setLoading] = useState(false);
 
   const getClient = useCallback(async () => {
-    const settings = await loadCameraSettings();
-    if (!settings) throw new Error('Add a camera in the Home tab before using controls.');
-    return new ReolinkClient(settings);
+    const client = await getCameraClient();
+    if (!client) throw new Error('Add a camera in the Home tab before using controls.');
+    return client;
   }, []);
 
   const perform = useCallback(async (action: (client: ReolinkClient) => Promise<void>) => {

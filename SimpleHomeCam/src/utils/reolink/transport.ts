@@ -24,6 +24,7 @@ export class ReolinkTransport {
 
   private token: string | null = null;
   private tokenExpiresAt = 0;
+  private loginPromise: Promise<void> | null = null;
 
   constructor(
     private readonly options: ReolinkTransportOptions,
@@ -38,7 +39,25 @@ export class ReolinkTransport {
   ): Promise<T> {
     await this.ensureAuthenticated();
 
-    return this.send<T>(command, true);
+    const requestToken = this.token;
+
+    try {
+      return await this.send<T>(command, true);
+    } catch (error) {
+      if (!this.isAuthenticationFailure(error)) {
+        throw error;
+      }
+
+      // Only invalidate the token used by this request. Another request may
+      // already have refreshed it while this response was in flight.
+      if (this.token === requestToken) {
+        this.token = null;
+        this.tokenExpiresAt = 0;
+      }
+
+      await this.ensureAuthenticated();
+      return this.send<T>(command, true);
+    }
   }
 
   async logout(): Promise<void> {
@@ -86,12 +105,12 @@ export class ReolinkTransport {
 
     this.token = token;
 
-    const leaseTimeMs =
-      (response.Token.leaseTime || 3600) * 1000;
-
-    // Refresh one minute before the token expires.
-    this.tokenExpiresAt =
-      Date.now() + leaseTimeMs - 60_000;
+    const leaseSeconds = Number(response.Token.leaseTime);
+    const leaseTimeMs = Number.isFinite(leaseSeconds) && leaseSeconds > 0
+      ? leaseSeconds * 1000
+      : 3_600_000;
+    const refreshMarginMs = Math.min(60_000, leaseTimeMs * 0.1);
+    this.tokenExpiresAt = Date.now() + leaseTimeMs - refreshMarginMs;
   }
 
   private async ensureAuthenticated(): Promise<void> {
@@ -102,7 +121,18 @@ export class ReolinkTransport {
       return;
     }
 
-    await this.login();
+    if (!this.loginPromise) {
+      this.loginPromise = this.login().finally(() => {
+        this.loginPromise = null;
+      });
+    }
+
+    await this.loginPromise;
+  }
+
+  private isAuthenticationFailure(error: unknown): boolean {
+    return error instanceof ReolinkError &&
+      (error.code === -6 || error.code === -21 || error.code === 401 || error.code === 403);
   }
 
   private async send<T>(
@@ -131,7 +161,6 @@ export class ReolinkTransport {
       this.options.timeoutMs,
     );
 
-    console.log("Sending Reolink command:", requestCommand, "URL:", url.toString() + "Channel and IP:", this.options.host, "Port:", this.options.port, "HTTPS:", this.options.https, "channel", requestCommand.param.channel);
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -167,7 +196,7 @@ export class ReolinkTransport {
         throw new ReolinkError(
           result.error?.detail ??
             `Reolink command "${command.cmd}" failed`,
-          result.code,
+          result.error?.rspCode ?? result.code,
           command.cmd,
         );
       }
@@ -175,7 +204,7 @@ export class ReolinkTransport {
       return result.value as T;
     } catch (error) {
       if (
-        error instanceof DOMException &&
+        error instanceof Error &&
         error.name === 'AbortError'
       ) {
         throw new ReolinkTimeoutError(command.cmd);
