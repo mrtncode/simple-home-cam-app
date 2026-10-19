@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraStream } from '@/components/CameraScreen';
 import { DetectionState, LightState, PtzPreset, ReolinkClient } from '@/utils/reolink';
 import { getCameraClient, loadCameraSettings } from '@/utils/cameraSettings';
+import { localizedError, useI18n } from '@/utils/i18n';
 
 const colors = {
   canvas: '#f5f3ed',
@@ -27,6 +28,7 @@ const colors = {
 
 export default function SimpleViewScreen() {
   const { width } = useWindowDimensions();
+  const { t } = useI18n();
   const wide = width >= 900;
   const [presets, setPresets] = useState<PtzPreset[]>([]);
   const [light, setLight] = useState<LightState | null>(null);
@@ -36,7 +38,7 @@ export default function SimpleViewScreen() {
 
   const getClient = useCallback(async () => {
     const client = await getCameraClient();
-    if (!client) throw new Error('Add a camera in the Home tab before using controls.');
+    if (!client) throw new Error(t('simple.missingCamera'));
     return client;
   }, []);
 
@@ -46,7 +48,7 @@ export default function SimpleViewScreen() {
       const client = await getClient();
       await action(client);
     } catch (error) {
-      Alert.alert('Camera control error', error instanceof Error ? error.message : 'Unknown error');
+      Alert.alert(t('error.controlsTitle'), localizedError(error, t));
     } finally {
       setLoading(false);
     }
@@ -87,10 +89,10 @@ export default function SimpleViewScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.kicker}>HOME CAM</Text>
-          <Text style={styles.title}>Simple View</Text>
+          <Text style={styles.title}>{t('simple.title')}</Text>
         </View>
         <Pressable onPress={() => void refresh()} style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]} accessibilityRole="button">
-          <Text style={styles.refreshText}>Refresh</Text>
+          <Text style={styles.refreshText}>{t('simple.refresh')}</Text>
         </Pressable>
       </View>
 
@@ -99,24 +101,24 @@ export default function SimpleViewScreen() {
           <CameraStream />
         </View>
         <ScrollView style={[styles.controlsScroll, wide && styles.wideControls]} contentContainerStyle={styles.controls} showsVerticalScrollIndicator={false}>
-          {loading && <View style={styles.loading}><ActivityIndicator color={colors.accent} /><Text style={styles.muted}>Updating camera…</Text></View>}
+          {loading && <View style={styles.loading}><ActivityIndicator color={colors.accent} /><Text style={styles.muted}>{t('simple.updating')}</Text></View>}
 
-          <Panel title="PTZ Presets">
+          <Panel title={t('simple.ptz')}>
             {presets.length ? presets.map((preset) => (
               <ActionButton key={preset.id} title={preset.name} onPress={() => void perform((client) => client.ptz.gotoPreset(preset.id))} />
-            )) : <Text style={styles.muted}>No presets available</Text>}
+            )) : <Text style={styles.muted}>{t('simple.noPresets')}</Text>}
           </Panel>
 
-          <Panel title="Camera controls">
-            <ActionButton title={sirenEnabled ? 'Turn siren off' : 'Turn siren on'} detail={sirenEnabled ? 'ON' : 'OFF'} onPress={() => void toggleSiren()} />
-            <ActionButton title={light ? (light.enabled ? 'Turn light off' : 'Turn light on') : 'Light status unavailable'} detail={light ? (light.enabled ? 'ON' : 'OFF') : '—'} onPress={toggleLight} disabled={!light} />
+          <Panel title={t('simple.controls')}>
+            <ActionButton title={sirenEnabled ? t('simple.sirenOff') : t('simple.sirenOn')} detail={sirenEnabled ? t('common.on') : t('common.off')} onPress={() => void toggleSiren()} />
+            <ActionButton title={light ? (light.enabled ? t('simple.lightOff') : t('simple.lightOn')) : t('simple.lightUnavailable')} detail={light ? (light.enabled ? t('common.on') : t('common.off')) : '—'} onPress={toggleLight} disabled={!light} />
           </Panel>
 
-          <Panel title="Sensors">
-            <Sensor label="Motion" active={detection?.motion} />
-            <Sensor label="Person" active={detection?.person} />
+          <Panel title={t('simple.sensors')}>
+            <Sensor label={t('simple.motion')} active={detection?.motion} />
+            <Sensor label={t('simple.person')} active={detection?.person} />
           </Panel>
-          <Text style={styles.note}>Sensor readings update when you refresh.</Text>
+          <Text style={styles.note}>{t('simple.sensorNote')}</Text>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -134,7 +136,8 @@ function ActionButton({ title, detail, onPress, disabled }: { title: string; det
 }
 
 function Sensor({ label, active }: { label: string; active?: boolean }) {
-  return <View style={styles.sensorRow}><Text style={styles.sensorLabel}>{label}</Text><Text style={[styles.sensorState, active && styles.sensorActive]}>{active === undefined ? 'Unknown' : active ? 'Detected' : 'Clear'}</Text></View>;
+  const { t } = useI18n();
+  return <View style={styles.sensorRow}><Text style={styles.sensorLabel}>{label}</Text><Text style={[styles.sensorState, active && styles.sensorActive]}>{active === undefined ? t('simple.unknown') : active ? t('simple.detected') : t('simple.clear')}</Text></View>;
 }
 
 const styles = StyleSheet.create({

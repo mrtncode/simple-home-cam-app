@@ -17,8 +17,10 @@ import {
 } from '../utils/reolink';
 import { getCameraClient } from '../utils/cameraSettings';
 import { CameraStream } from '@/components/CameraScreen';
+import { localizedError, useI18n } from '@/utils/i18n';
 
 export function ReolinkTestScreen() {
+  const { t } = useI18n();
   const [presets, setPresets] = useState<PtzPreset[]>([]);
   const [light, setLight] = useState<LightState | null>(null);
   const [detection, setDetection] =
@@ -31,7 +33,7 @@ export function ReolinkTestScreen() {
     const camera = await getCameraClient();
 
     if (!camera) {
-      throw new Error('Add a camera before using the controls.');
+      throw new Error(t('test.addCamera'));
     }
 
     return camera;
@@ -42,12 +44,7 @@ export function ReolinkTestScreen() {
       setLoading(true);
       await action();
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unknown error';
-
-      Alert.alert('Reolink error', message);
+      Alert.alert(t('error.controlsTitle'), localizedError(error, t));
     } finally {
       setLoading(false);
     }
@@ -144,10 +141,10 @@ export function ReolinkTestScreen() {
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Reolink Test</Text>
+        <Text style={styles.title}>{t('test.title')}</Text>
 
         <Text style={styles.subtitle}>
-          API playground
+          {t('test.subtitle')}
         </Text>
 
         <CameraStream />
@@ -156,26 +153,26 @@ export function ReolinkTestScreen() {
           <View style={styles.loading}>
             <ActivityIndicator />
             <Text style={styles.loadingText}>
-              Request running...
+              {t('test.running')}
             </Text>
           </View>
         )}
 
-        <Section title="PTZ Presets">
+        <Section title={t('simple.ptz')}>
           <Button
-            title="Reload presets"
+            title={t('test.reloadPresets')}
             onPress={loadPresets}
           />
 
           {presets.length === 0 ? (
             <Text style={styles.muted}>
-              No presets found.
+              {t('test.noPresets')}
             </Text>
           ) : (
             presets.map((preset) => (
               <Button
                 key={preset.id}
-                title={`Go to ${preset.name} (#${preset.id})`}
+                title={t('test.goTo', { name: preset.name, id: preset.id })}
                 onPress={() =>
                   run(async () => {
                     const camera = await getSavedClient();
@@ -187,42 +184,42 @@ export function ReolinkTestScreen() {
           )}
         </Section>
 
-        <Section title="Siren">
+        <Section title={t('test.siren')}>
           <StatusRow
-            label="Status"
-            value={sirenEnabled ? 'ON' : 'OFF'}
+            label={t('test.status')}
+            value={sirenEnabled ? t('common.on') : t('common.off')}
           />
 
           <Button
             title={
               sirenEnabled
-                ? 'Turn siren off'
-                : 'Turn siren on'
+                ? t('simple.sirenOff')
+                : t('simple.sirenOn')
             }
             onPress={toggleSiren}
           />
         </Section>
 
-        <Section title="Light">
+        <Section title={t('test.light')}>
           {light ? (
             <>
               <StatusRow
-                label="Status"
+                label={t('test.status')}
                 value={
-                  light.enabled ? 'ON' : 'OFF'
+                  light.enabled ? t('common.on') : t('common.off')
                 }
               />
 
               <StatusRow
-                label="Brightness"
+                label={t('test.brightness')}
                 value={`${light.brightness}%`}
               />
 
               <Button
                 title={
                   light.enabled
-                    ? 'Turn light off'
-                    : 'Turn light on'
+                  ? t('simple.lightOff')
+                  : t('simple.lightOn')
                 }
                 onPress={toggleLight}
               />
@@ -253,43 +250,43 @@ export function ReolinkTestScreen() {
             </>
           ) : (
             <Text style={styles.muted}>
-              Loading light state...
+              {t('test.loadingLight')}
             </Text>
           )}
         </Section>
 
-        <Section title="Detection">
+        <Section title={t('test.detection')}>
           <Button
-            title="Refresh detection"
+            title={t('test.refreshDetection')}
             onPress={loadDetection}
           />
 
           {detection && (
             <>
               <StatusRow
-                label="Motion"
+                label={t('simple.motion')}
                 value={
                   detection.motion
-                    ? 'DETECTED'
-                    : 'None'
+                    ? t('test.motionDetected')
+                    : t('test.none')
                 }
               />
 
               <StatusRow
-                label="Person"
+                label={t('simple.person')}
                 value={
                   detection.person
-                    ? 'DETECTED'
-                    : 'None'
+                    ? t('test.personDetected')
+                    : t('test.none')
                 }
               />
             </>
           )}
         </Section>
 
-        <Section title="Everything">
+        <Section title={t('test.everything')}>
           <Button
-            title="Refresh all"
+            title={t('test.refreshAll')}
             onPress={refresh}
           />
         </Section>

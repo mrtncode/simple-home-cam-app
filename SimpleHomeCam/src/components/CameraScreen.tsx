@@ -8,23 +8,25 @@ import {
 import { VLCPlayer } from 'react-native-vlc-media-player';
 
 import { loadCameraSettings } from '@/utils/cameraSettings';
+import { useI18n } from '@/utils/i18n';
 
 export function CameraStream() {
+  const { t } = useI18n();
   const [cameraRtspUrl, setCameraRtspUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<string>('Warte auf Initialisierung...');
+  const [debugLog, setDebugLog] = useState<string>(t('camera.waiting'));
 
   useEffect(() => {
     let mounted = true;
 
     const prepareStream = async () => {
       try {
-        setDebugLog('Lade Kameraeinstellungen...');
+        setDebugLog(t('camera.loadingSettings'));
         const settings = await loadCameraSettings();
         if (!mounted) return;
 
         if (!settings) {
-          setError('Please add a camera in the settings first!');
+          setError(t('camera.addFirst'));
           return;
         }
 
@@ -32,17 +34,16 @@ export function CameraStream() {
         const username = encodeURIComponent(settings.username);
         const password = encodeURIComponent(settings.password);
         const streamUrl = `rtsp://${username}:${password}@${settings.host}:554/Preview_${channel}_sub`;
-        setDebugLog(`RTSP-Stream bereit: Kanal ${channel} ...`);
+        setDebugLog(t('camera.streamReady', { channel }));
         
         if (mounted) {
           setCameraRtspUrl(streamUrl);
         }
 
-      } catch (err: unknown) {
+      } catch {
         if (mounted) {
-          const message = err instanceof Error ? err.message : String(err);
-          setDebugLog(`Fehler beim Laden der Kameraeinstellungen: ${message}`);
-          setError('Kameraeinstellungen konnten nicht geladen werden.');
+          setDebugLog(t('camera.settingsError'));
+          setError(t('camera.settingsError'));
         }
       }
     };
@@ -52,13 +53,13 @@ export function CameraStream() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [t]);
 
   if (error) {
     return (
       <View style={styles.container}>
         <Text style={styles.error}>{error}</Text>
-        <Text style={styles.debugText}>Letzter Status: {debugLog}</Text>
+        <Text style={styles.debugText}>{t('camera.lastStatus', { status: debugLog })}</Text>
       </View>
     );
   }
@@ -83,16 +84,16 @@ export function CameraStream() {
           }}
           autoplay
           volume={100}
-          onLoad={() => setDebugLog('RTSP-Stream geladen.')}
-          onPlaying={() => setDebugLog('Stream läuft.')}
-          onBuffering={() => setDebugLog('Stream puffert...')}
+          onLoad={() => setDebugLog(t('camera.streamLoaded'))}
+          onPlaying={() => setDebugLog(t('camera.playing'))}
+          onBuffering={() => setDebugLog(t('camera.buffering'))}
           onError={() => {
-            setDebugLog('VLC konnte den RTSP-Stream nicht öffnen.');
-            setError('RTSP-Stream konnte nicht gestartet werden.');
+            setDebugLog(t('camera.streamError'));
+            setError(t('camera.streamError'));
           }}
         />
       </View>
-      <Text style={styles.liveDebugLabel}>Echtzeit-Debugging:</Text>
+      <Text style={styles.liveDebugLabel}>{t('camera.debug')}</Text>
       <Text style={styles.debugTerminal}>{debugLog}</Text>
     </View>
   );

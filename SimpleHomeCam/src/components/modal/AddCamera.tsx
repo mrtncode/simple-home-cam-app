@@ -15,6 +15,7 @@ import {
 
 import { ReolinkClient } from '@/utils/reolink';
 import { SavedCameraSettings } from '@/utils/cameraSettings';
+import { localizedError, useI18n } from '@/utils/i18n';
 
 export type CameraConnection = SavedCameraSettings & {
 	client: ReolinkClient;
@@ -27,6 +28,7 @@ type AddCameraProps = {
 };
 
 export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
+	const { t } = useI18n();
 	const [host, setHost] = useState('');
 	const [username, setUsername] = useState('admin');
 	const [password, setPassword] = useState('');
@@ -59,12 +61,12 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 		const parsedPort = Number(port.trim());
 
 		if (!normalizedHost || !username.trim() || !password) {
-			setError('Enter the camera IP, username, and password.');
+			setError(t('setup.missing'));
 			return;
 		}
 
 		if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
-			setError('Port must be a number between 1 and 65535.');
+			setError(t('setup.invalidPort'));
 			return;
 		}
 
@@ -93,11 +95,7 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 			});
 			reset();
 		} catch (connectionError) {
-			setError(
-				connectionError instanceof Error
-					? connectionError.message
-					: 'Unable to connect to the camera.',
-			);
+			setError(localizedError(connectionError, t) || t('error.connection'));
 		} finally {
 			setSaving(false);
 		}
@@ -117,8 +115,8 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 				<View style={styles.sheet}>
 					<View style={styles.header}>
 						<View>
-							<Text style={styles.eyebrow}>CAMERA SETUP</Text>
-							<Text style={styles.title}>Add a camera</Text>
+							<Text style={styles.eyebrow}>{t('setup.eyebrow')}</Text>
+							<Text style={styles.title}>{t('setup.title')}</Text>
 						</View>
 						<Pressable onPress={close} disabled={saving} style={styles.closeButton}>
 							<Text style={styles.closeText}>×</Text>
@@ -127,11 +125,11 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 
 					<ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
 						<Text style={styles.description}>
-							Connect directly to your Reolink camera on the local network.
+						{t('setup.description')}
 						</Text>
 
 						<Field
-							label="Camera IP or hostname"
+							label={t('setup.host')}
 							value={host}
 							onChangeText={setHost}
 							placeholder="192.168.1.42"
@@ -140,7 +138,7 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 							keyboardType="url"
 						/>
 						<Field
-							label="Username"
+							label={t('setup.username')}
 							value={username}
 							onChangeText={setUsername}
 							placeholder="admin"
@@ -148,10 +146,10 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 							autoCorrect={false}
 						/>
 						<Field
-							label="Password"
+							label={t('setup.password')}
 							value={password}
 							onChangeText={setPassword}
-							placeholder="Camera password"
+							placeholder={t('setup.passwordPlaceholder')}
 							secureTextEntry
 							autoCapitalize="none"
 							autoCorrect={false}
@@ -160,7 +158,7 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 						<View style={styles.inlineFields}>
 							<View style={styles.portField}>
 								<Field
-									label="Port"
+									label={t('setup.port')}
 									value={port}
 									onChangeText={setPort}
 									placeholder="80"
@@ -169,8 +167,8 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 							</View>
 							<View style={styles.protocolRow}>
 								<View>
-									<Text style={styles.fieldLabel}>HTTPS</Text>
-									<Text style={styles.helper}>Use secure transport</Text>
+									<Text style={styles.fieldLabel}>{t('setup.https')}</Text>
+									<Text style={styles.helper}>{t('setup.secure')}</Text>
 								</View>
 								<Switch value={https} onValueChange={setHttps} trackColor={{ false: '#d8d3c8', true: '#cf5c36' }} thumbColor="#fff" />
 							</View>
@@ -183,10 +181,10 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 							onPress={submit}
 							disabled={saving}
 						>
-							{saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>Connect camera</Text>}
+							{saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>{t('setup.connect')}</Text>}
 						</Pressable>
 						<Pressable onPress={close} disabled={saving} style={styles.cancelButton}>
-							<Text style={styles.cancelText}>Cancel</Text>
+							<Text style={styles.cancelText}>{t('common.cancel')}</Text>
 						</Pressable>
 					</ScrollView>
 				</View>

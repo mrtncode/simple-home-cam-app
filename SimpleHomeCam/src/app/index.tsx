@@ -11,10 +11,12 @@ import {
   saveCameraSettings,
 } from '@/utils/cameraSettings';
 import { ReolinkClient } from '@/utils/reolink';
+import { useI18n } from '@/utils/i18n';
 
 export default function HomeScreen() {
   const [addCameraVisible, setAddCameraVisible] = useState(false);
   const [camera, setCamera] = useState<CameraConnection | null>(null);
+  const { t, language, setLanguage } = useI18n();
 
   useEffect(() => {
     loadCameraSettings().then((settings) => {
@@ -32,12 +34,12 @@ export default function HomeScreen() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Log out',
-      'Remove this camera and its saved credentials from this device?',
+      t('home.logoutTitle'),
+      t('home.logoutConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Log out',
+          text: t('home.logout'),
           style: 'destructive',
           onPress: async () => {
             await clearCameraSettings();
@@ -55,8 +57,8 @@ export default function HomeScreen() {
           <View style={styles.header}>
             <View>
               <Text style={styles.kicker}>HOME CAM</Text>
-              <Text style={styles.title}>Your cameras</Text>
-              <Text style={styles.subtitle}>A quiet view into what matters.</Text>
+              <Text style={styles.title}>{t('home.title')}</Text>
+              <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
             </View>
             <View style={styles.liveDot} />
           </View>
@@ -65,31 +67,41 @@ export default function HomeScreen() {
             <View style={styles.cameraCard}>
               <View style={styles.cardTopline}>
                 <View style={styles.cameraIcon}><Text style={styles.cameraIconText}>◉</Text></View>
-                <View style={styles.connectedBadge}><View style={styles.connectedDot} /><Text style={styles.connectedText}>CONNECTED</Text></View>
+                <View style={styles.connectedBadge}><View style={styles.connectedDot} /><Text style={styles.connectedText}>{t('home.connected')}</Text></View>
               </View>
               <Text style={styles.cameraName}>{camera.host}</Text>
               <Text style={styles.cameraMeta}>{camera.https ? 'HTTPS' : 'HTTP'} · port {camera.port} · {camera.username}</Text>
               <View style={styles.cardDivider} />
               <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]} onPress={() => setAddCameraVisible(true)}>
-                <Text style={styles.secondaryButtonText}>Replace camera</Text>
+                <Text style={styles.secondaryButtonText}>{t('home.replace')}</Text>
               </Pressable>
               <Pressable style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]} onPress={handleLogout}>
-                <Text style={styles.logoutButtonText}>Log out</Text>
+                <Text style={styles.logoutButtonText}>{t('home.logout')}</Text>
               </Pressable>
             </View>
           ) : (
             <View style={styles.emptyState}>
               <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>+</Text></View>
-              <Text style={styles.emptyTitle}>No camera connected</Text>
-              <Text style={styles.emptyDescription}>Add your first Reolink camera to start monitoring your home.</Text>
+              <Text style={styles.emptyTitle}>{t('home.noCamera')}</Text>
+              <Text style={styles.emptyDescription}>{t('home.empty')}</Text>
               <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]} onPress={() => setAddCameraVisible(true)}>
-                <Text style={styles.primaryButtonText}>Add a camera</Text>
+                <Text style={styles.primaryButtonText}>{t('home.add')}</Text>
                 <Text style={styles.primaryButtonArrow}>→</Text>
               </Pressable>
             </View>
           )}
 
-          <Text style={styles.footerNote}>Your credentials stay on this device.</Text>
+          <View style={styles.languageCard}>
+            <Text style={styles.languageLabel}>{t('home.language')}</Text>
+            <View style={styles.languageChoices}>
+              {(['en', 'de'] as const).map((option) => (
+                <Pressable key={option} onPress={() => setLanguage(option)} style={[styles.languageChoice, language === option && styles.languageChoiceSelected]}>
+                  <Text style={[styles.languageChoiceText, language === option && styles.languageChoiceTextSelected]}>{option === 'en' ? t('home.english') : t('home.german')}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          <Text style={styles.footerNote}>{t('home.privacy')}</Text>
         </ScrollView>
         <AddCamera visible={addCameraVisible} onClose={() => setAddCameraVisible(false)} onAdd={handleAddCamera} />
       </SafeAreaView>
@@ -285,6 +297,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  languageCard: {
+    marginTop: 28,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#e2ddd2',
+    borderRadius: 14,
+    backgroundColor: '#fffdf9',
+  },
+  languageLabel: { color: '#20241f', fontSize: 14, fontWeight: '700' },
+  languageChoices: { flexDirection: 'row', gap: 6 },
+  languageChoice: { minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10 },
+  languageChoiceSelected: { backgroundColor: '#20241f' },
+  languageChoiceText: { color: '#77796f', fontSize: 13, fontWeight: '700' },
+  languageChoiceTextSelected: { color: '#fffdf9' },
   pressed: {
     opacity: 0.75,
   },
