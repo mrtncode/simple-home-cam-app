@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   StyleSheet,
   Text,
   View,
@@ -9,9 +8,6 @@ import {
 import { VLCPlayer } from 'react-native-vlc-media-player';
 
 import { loadCameraSettings } from '@/utils/cameraSettings';
-
-const { width } = Dimensions.get('window');
-const VIDEO_HEIGHT = (width * 9) / 16; 
 
 export function CameraStream() {
   const [cameraRtspUrl, setCameraRtspUrl] = useState<string | null>(null);
@@ -78,7 +74,7 @@ export function CameraStream() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.videoContainer, { height: VIDEO_HEIGHT }]}>
+      <View style={styles.videoContainer}>
         <VLCPlayer
           style={styles.player}
           source={{
@@ -105,9 +101,9 @@ export function CameraStream() {
 export default CameraStream;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111', justifyContent: 'center' },
-  videoContainer: { width: '100%', backgroundColor: '#000' },
-  player: { flex: 10 },
+  container: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#111', justifyContent: 'center' },
+  videoContainer: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
+  player: { flex: 1 },
   liveDebugLabel: { color: '#888', fontSize: 12, paddingHorizontal: 16, marginTop: 20, fontWeight: 'bold' },
   debugTerminal: { padding: 12, color: '#f1c40f', backgroundColor: '#000', margin: 16, borderRadius: 6, fontSize: 11, fontFamily: 'monospace' },
   error: { padding: 16, color: '#c0392b', textAlign: 'center', fontWeight: 'bold' },
