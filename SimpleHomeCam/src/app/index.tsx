@@ -56,11 +56,8 @@ export default function HomeScreen() {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.kicker}>HOME CAM</Text>
               <Text style={styles.title}>{t('home.title')}</Text>
-              <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
             </View>
-            <View style={styles.liveDot} />
           </View>
 
           {camera ? (
@@ -101,7 +98,6 @@ export default function HomeScreen() {
               ))}
             </View>
           </View>
-          <Text style={styles.footerNote}>{t('home.privacy')}</Text>
         </ScrollView>
         <AddCamera visible={addCameraVisible} onClose={() => setAddCameraVisible(false)} onAdd={handleAddCamera} />
       </SafeAreaView>
@@ -112,7 +108,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f5ee',
+    backgroundColor: '#ffffff',
   },
   safeArea: {
     flex: 1,
@@ -135,7 +131,7 @@ const styles = StyleSheet.create({
   },
   kicker: {
     marginBottom: 8,
-    color: '#cf5c36',
+    color: '#002c9c',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 2,

@@ -17,11 +17,11 @@ import { getCameraClient, loadCameraSettings } from '@/utils/cameraSettings';
 import { localizedError, useI18n } from '@/utils/i18n';
 
 const colors = {
-  canvas: '#f5f3ed',
+  canvas: '#ffffff',
   card: '#fffefa',
   ink: '#20241f',
   muted: '#77796f',
-  accent: '#cf5c36',
+  accent: '#002c9c',
   line: '#e5e0d6',
   good: '#337a51',
 };
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   panel: { padding: 16, borderRadius: 17, borderColor: colors.line, borderWidth: 1, backgroundColor: colors.card },
   panelTitle: { color: colors.ink, fontSize: 17, fontWeight: '800', marginBottom: 12 },
   panelContent: { gap: 9 },
-  actionButton: { minHeight: 48, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#f2eee5', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  actionButton: { minHeight: 48, paddingHorizontal: 14, borderRadius: 12, backgroundColor: '#efeff0b4', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   actionText: { flexShrink: 1, color: colors.ink, fontSize: 14, fontWeight: '700' },
   actionDetail: { color: colors.accent, fontSize: 12, fontWeight: '800', marginLeft: 8 },
   pressed: { opacity: 0.72 },

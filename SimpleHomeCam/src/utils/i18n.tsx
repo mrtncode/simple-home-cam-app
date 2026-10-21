@@ -7,7 +7,7 @@ export type Language = 'en' | 'de';
 const translations = {
   en: {
     'tabs.simple': 'Simple View', 'tabs.setup': 'Setup Camera', 'tabs.explore': 'Explore', 'tabs.test': 'Camera Test',
-    'home.title': 'Your cameras', 'home.subtitle': 'A quiet view into what matters.', 'home.connected': 'CONNECTED',
+    'home.title': 'Your cameras', 'home.connected': 'CONNECTED',
     'home.replace': 'Replace camera', 'home.logout': 'Log out', 'home.noCamera': 'No camera connected',
     'home.empty': 'Add your first Reolink camera to start monitoring your home.', 'home.add': 'Add a camera',
     'home.privacy': 'Your credentials stay on this device.', 'home.logoutTitle': 'Log out',
@@ -52,7 +52,7 @@ const translations = {
   },
   de: {
     'tabs.simple': 'Einfache Ansicht', 'tabs.setup': 'Kamera einrichten', 'tabs.explore': 'Entdecken', 'tabs.test': 'Kameratest',
-    'home.title': 'Deine Kameras', 'home.subtitle': 'Ein ruhiger Blick auf das, was wichtig ist.', 'home.connected': 'VERBUNDEN',
+    'home.title': 'Kameras', 'home.connected': 'VERBUNDEN',
     'home.replace': 'Kamera ersetzen', 'home.logout': 'Abmelden', 'home.noCamera': 'Keine Kamera verbunden',
     'home.empty': 'Füge deine erste Reolink-Kamera hinzu, um dein Zuhause im Blick zu behalten.', 'home.add': 'Kamera hinzufügen',
     'home.privacy': 'Deine Zugangsdaten bleiben auf diesem Gerät.', 'home.logoutTitle': 'Abmelden',
