@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     height: 12,
     marginTop: 8,
     borderRadius: 6,
-    backgroundColor: '#cf5c36',
+    backgroundColor: '#002791',
   },
   emptyState: {
     alignItems: 'center',
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2ddd2',
     borderRadius: 24,
-    backgroundColor: '#fffdf9',
+    backgroundColor: '#f7f7f691',
   },
   emptyIcon: {
     width: 66,
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 22,
     borderRadius: 33,
-    backgroundColor: '#f0d8c9',
+    backgroundColor: '#4692dd',
   },
   emptyIconText: {
     marginTop: -4,
-    color: '#cf5c36',
+    color: '#f6f9fe',
     fontSize: 34,
-    fontWeight: '300',
+    fontWeight: '700',
   },
   emptyTitle: {
     color: '#20241f',
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
     paddingHorizontal: 22,
     borderRadius: 14,
-    backgroundColor: '#cf5c36',
+    backgroundColor: '#004bc3',
   },
   primaryButtonText: {
     color: '#fff',
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3b4038',
   },
   cameraIconText: {
-    color: '#f0b59b',
+    color: '#9ba4f0',
     fontSize: 22,
   },
   connectedBadge: {
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   cameraName: {
     marginTop: 24,
-    color: '#fffdf9',
+    color: '#f7f7f691',
     fontSize: 24,
     fontWeight: '800',
   },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   secondaryButtonText: {
-    color: '#f0b59b',
+    color: '#9ba2f0',
     fontSize: 14,
     fontWeight: '800',
   },
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   logoutButtonText: {
-    color: '#e08a7a',
+    color: '#232cb0',
     fontSize: 14,
     fontWeight: '800',
   },
@@ -302,14 +302,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2ddd2',
     borderRadius: 14,
-    backgroundColor: '#fffdf9',
+    backgroundColor: '#f7f7f691',
   },
   languageLabel: { color: '#20241f', fontSize: 14, fontWeight: '700' },
   languageChoices: { flexDirection: 'row', gap: 6 },
   languageChoice: { minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10 },
   languageChoiceSelected: { backgroundColor: '#20241f' },
   languageChoiceText: { color: '#77796f', fontSize: 13, fontWeight: '700' },
-  languageChoiceTextSelected: { color: '#fffdf9' },
+  languageChoiceTextSelected: { color: '#f7f7f691' },
   pressed: {
     opacity: 0.75,
   },

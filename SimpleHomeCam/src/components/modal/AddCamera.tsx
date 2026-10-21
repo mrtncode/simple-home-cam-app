@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: '#ddd8cc',
 		borderRadius: 12,
-		backgroundColor: '#fffdf9',
+		backgroundColor: '#f7f7f691',
 		color: '#20241f',
 		fontSize: 16,
 	},

@@ -18,7 +18,7 @@ import { localizedError, useI18n } from '@/utils/i18n';
 
 const colors = {
   canvas: '#ffffff',
-  card: '#fffefa',
+  card: '#eeeeed3e',
   ink: '#20241f',
   muted: '#77796f',
   accent: '#002c9c',
