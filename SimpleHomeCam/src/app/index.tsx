@@ -37,6 +37,7 @@ export default function SimpleViewScreen() {
   const [detection, setDetection] = useState<DetectionState | null>(null);
   const [sirenEnabled, setSirenEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [streamReloadKey, setStreamReloadKey] = useState(0);
 
   const getClient = useCallback(async () => {
     const client = await getCameraClient();
@@ -64,6 +65,11 @@ export default function SimpleViewScreen() {
     setLight(nextLight);
     setDetection(nextDetection);
   }), [perform]);
+
+  const refreshCamera = () => {
+    setStreamReloadKey((key) => key + 1);
+    void refresh();
+  };
 
   useEffect(() => {
     void loadCameraSettings().then((settings) => {
@@ -96,7 +102,7 @@ export default function SimpleViewScreen() {
         <Pressable onPress={() => router.push('/settings')} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={t('home.settings')}>
           <SymbolView name={{ ios: 'gearshape.fill', android: 'settings', web: 'settings' }} tintColor={colors.ink} size={21} />
         </Pressable>
-        <Pressable onPress={() => void refresh()} style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]} accessibilityRole="button">
+        <Pressable onPress={refreshCamera} style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]} accessibilityRole="button">
           <SymbolView name={{ ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' }} tintColor="#fff" size={18} />
           <Text style={styles.refreshText}>{t('simple.refresh')}</Text>
         </Pressable>
@@ -105,7 +111,7 @@ export default function SimpleViewScreen() {
 
       <View style={[styles.content, wide && styles.wideContent]}>
         <View style={[styles.cameraCard, wide && styles.wideCamera]}>
-          <CameraStream />
+          <CameraStream key={streamReloadKey} />
         </View>
         <ScrollView style={[styles.controlsScroll, wide && styles.wideControls]} contentContainerStyle={styles.controls} showsVerticalScrollIndicator={false}>
           {loading && <View style={styles.loading}><ActivityIndicator color={colors.accent} /><Text style={styles.muted}>{t('simple.updating')}</Text></View>}
@@ -149,13 +155,13 @@ function Sensor({ label, active }: { label: string; active?: boolean }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.canvas },
-  header: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  settingsButton: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#eeeeed' },
+  header: { paddingHorizontal: 14, paddingTop: 2, paddingBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  settingsButton: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 11, backgroundColor: '#eeeeed' },
   kicker: { color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 2 },
-  title: { color: colors.ink, fontSize: 28, fontWeight: '800', marginTop: 3 },
-  refreshButton: { minHeight: 56, minWidth: 120, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingHorizontal: 20, borderRadius: 15, backgroundColor: colors.ink },
-  refreshText: { color: '#fffefa', fontSize: 16, fontWeight: '700' },
+  title: { color: colors.ink, fontSize: 20, fontWeight: '800', marginTop: 0 },
+  refreshButton: { minHeight: 36, minWidth: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 10, borderRadius: 11, backgroundColor: colors.ink },
+  refreshText: { color: '#fffefa', fontSize: 12, fontWeight: '700' },
   content: { flex: 1, paddingHorizontal: 16, paddingBottom: 12 },
   wideContent: { flexDirection: 'row', gap: 18, paddingHorizontal: 24 },
   cameraCard: { width: '100%', alignSelf: 'center', overflow: 'hidden', borderTopLeftRadius: 0, borderTopRightRadius: 0, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, backgroundColor: '#000' },

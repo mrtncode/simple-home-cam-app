@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   View,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 import { VLCPlayer } from 'react-native-vlc-media-player';
 
 import { loadCameraSettings } from '@/utils/cameraSettings';
@@ -16,6 +18,7 @@ export function CameraStream() {
   const [error, setError] = useState<string | null>(null);
   const [streamLoading, setStreamLoading] = useState(true);
   const hasStartedRef = useRef(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [debugLog, setDebugLog] = useState<string>(t('camera.waiting'));
 
   useEffect(() => {
@@ -57,13 +60,28 @@ export function CameraStream() {
     return () => {
       mounted = false;
     };
-  }, [t]);
+  }, [retryCount, t]);
+
+  const retryStream = () => {
+    setError(null);
+    setCameraRtspUrl(null);
+    setStreamLoading(true);
+    setDebugLog(t('camera.waiting'));
+    setRetryCount((count) => count + 1);
+  };
 
   if (error) {
     return (
       <View style={styles.container}>
         <Text style={styles.error}>{error}</Text>
         <Text style={styles.debugText}>{t('camera.lastStatus', { status: debugLog })}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={retryStream}
+          style={({ pressed }) => [styles.reloadButton, pressed && styles.pressed]}>
+          <SymbolView name={{ ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' }} tintColor="#fff" size={18} />
+          <Text style={styles.reloadButtonText}>{t('camera.reload')}</Text>
+        </Pressable>
       </View>
     );
   }
@@ -81,6 +99,7 @@ export function CameraStream() {
     <View style={styles.container}>
       <View style={styles.videoContainer}>
         <VLCPlayer
+          key={retryCount}
           style={styles.player}
           source={{
             uri: cameraRtspUrl,
@@ -119,4 +138,7 @@ const styles = StyleSheet.create({
   loadingOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0006' },
   error: { padding: 16, color: '#c0392b', textAlign: 'center', fontWeight: 'bold' },
   debugText: { color: '#aaa', fontSize: 12, textAlign: 'center', paddingHorizontal: 20 },
+  reloadButton: { minHeight: 50, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 16, paddingHorizontal: 20, borderRadius: 12, backgroundColor: '#004bc3' },
+  reloadButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  pressed: { opacity: 0.75 },
 });
