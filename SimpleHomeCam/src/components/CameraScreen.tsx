@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -15,6 +15,7 @@ export function CameraStream() {
   const [cameraRtspUrl, setCameraRtspUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [streamLoading, setStreamLoading] = useState(true);
+  const hasStartedRef = useRef(false);
   const [debugLog, setDebugLog] = useState<string>(t('camera.waiting'));
 
   useEffect(() => {
@@ -22,6 +23,8 @@ export function CameraStream() {
 
     const prepareStream = async () => {
       try {
+        hasStartedRef.current = false;
+        setStreamLoading(true);
         setDebugLog(t('camera.loadingSettings'));
         const settings = await loadCameraSettings();
         if (!mounted) return;
@@ -86,8 +89,15 @@ export function CameraStream() {
           autoplay
           volume={100}
           onLoad={() => setDebugLog(t('camera.streamLoaded'))}
-          onPlaying={() => { setDebugLog(t('camera.playing')); setStreamLoading(false); }}
-          onBuffering={() => setDebugLog(t('camera.buffering'))}
+          onPlaying={() => {
+            hasStartedRef.current = true;
+            setDebugLog(t('camera.playing'));
+            setStreamLoading(false);
+          }}
+          onBuffering={() => {
+            setDebugLog(t('camera.buffering'));
+            if (!hasStartedRef.current) setStreamLoading(true);
+          }}
           onError={() => {
             setStreamLoading(false);
             setDebugLog(t('camera.streamError'));
@@ -96,12 +106,6 @@ export function CameraStream() {
         />
         {streamLoading && <View style={styles.loadingOverlay} pointerEvents="none"><ActivityIndicator size="large" color="#fff" /></View>}
       </View>
-      {debugLog.trim().length > 0 && (
-        <>
-          <Text style={styles.liveDebugLabel}>{t('camera.debug')}</Text>
-          <Text style={styles.debugTerminal}>{debugLog}</Text>
-        </>
-      )}
     </View>
   );
 }
@@ -113,8 +117,6 @@ const styles = StyleSheet.create({
   videoContainer: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
   player: { flex: 1 },
   loadingOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0006' },
-  liveDebugLabel: { color: '#888', fontSize: 12, paddingHorizontal: 16, marginTop: 20, fontWeight: 'bold' },
-  debugTerminal: { padding: 12, color: '#f1c40f', backgroundColor: '#000', margin: 16, borderRadius: 6, fontSize: 11, fontFamily: 'monospace' },
   error: { padding: 16, color: '#c0392b', textAlign: 'center', fontWeight: 'bold' },
   debugText: { color: '#aaa', fontSize: 12, textAlign: 'center', paddingHorizontal: 20 },
 });
