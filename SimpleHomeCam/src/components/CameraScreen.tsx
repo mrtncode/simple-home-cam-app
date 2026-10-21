@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { VLCPlayer } from 'react-native-vlc-media-player';
 
 import { loadCameraSettings } from '@/utils/cameraSettings';
 import { useI18n } from '@/utils/i18n';
+import { ScaledText as Text } from '@/utils/font-size';
 
 export function CameraStream() {
   const { t } = useI18n();
   const [cameraRtspUrl, setCameraRtspUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [streamLoading, setStreamLoading] = useState(true);
   const [debugLog, setDebugLog] = useState<string>(t('camera.waiting'));
 
   useEffect(() => {
@@ -85,16 +86,22 @@ export function CameraStream() {
           autoplay
           volume={100}
           onLoad={() => setDebugLog(t('camera.streamLoaded'))}
-          onPlaying={() => setDebugLog(t('camera.playing'))}
+          onPlaying={() => { setDebugLog(t('camera.playing')); setStreamLoading(false); }}
           onBuffering={() => setDebugLog(t('camera.buffering'))}
           onError={() => {
+            setStreamLoading(false);
             setDebugLog(t('camera.streamError'));
             setError(t('camera.streamError'));
           }}
         />
+        {streamLoading && <View style={styles.loadingOverlay} pointerEvents="none"><ActivityIndicator size="large" color="#fff" /></View>}
       </View>
-      <Text style={styles.liveDebugLabel}>{t('camera.debug')}</Text>
-      <Text style={styles.debugTerminal}>{debugLog}</Text>
+      {debugLog.trim().length > 0 && (
+        <>
+          <Text style={styles.liveDebugLabel}>{t('camera.debug')}</Text>
+          <Text style={styles.debugTerminal}>{debugLog}</Text>
+        </>
+      )}
     </View>
   );
 }
@@ -105,6 +112,7 @@ const styles = StyleSheet.create({
   container: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#111', justifyContent: 'center' },
   videoContainer: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
   player: { flex: 1 },
+  loadingOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0006' },
   liveDebugLabel: { color: '#888', fontSize: 12, paddingHorizontal: 16, marginTop: 20, fontWeight: 'bold' },
   debugTerminal: { padding: 12, color: '#f1c40f', backgroundColor: '#000', margin: 16, borderRadius: 6, fontSize: 11, fontFamily: 'monospace' },
   error: { padding: 16, color: '#c0392b', textAlign: 'center', fontWeight: 'bold' },

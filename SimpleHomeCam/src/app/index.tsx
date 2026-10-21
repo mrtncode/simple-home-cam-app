@@ -1,316 +1,182 @@
-import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AddCamera, CameraConnection } from '@/components/modal/AddCamera';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  clearCameraSettings,
-  loadCameraSettings,
-  saveCameraSettings,
-} from '@/utils/cameraSettings';
-import { ReolinkClient } from '@/utils/reolink';
-import { useI18n } from '@/utils/i18n';
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { router } from 'expo-router';
 
-export default function HomeScreen() {
-  const [addCameraVisible, setAddCameraVisible] = useState(false);
-  const [camera, setCamera] = useState<CameraConnection | null>(null);
-  const { t, language, setLanguage } = useI18n();
+import { CameraStream } from '@/components/CameraScreen';
+import { DetectionState, LightState, PtzPreset, ReolinkClient } from '@/utils/reolink';
+import { getCameraClient, loadCameraSettings } from '@/utils/cameraSettings';
+import { localizedError, useI18n } from '@/utils/i18n';
+import { ScaledText as Text } from '@/utils/font-size';
 
-  useEffect(() => {
-    loadCameraSettings().then((settings) => {
-      if (settings) {
-        setCamera({ ...settings, client: new ReolinkClient(settings) });
-      }
-    });
+const colors = {
+  canvas: '#ffffff',
+  card: '#eeeeed3e',
+  ink: '#20241f',
+  muted: '#77796f',
+  accent: '#002c9c',
+  line: '#e5e0d6',
+  good: '#337a51',
+};
+
+export default function SimpleViewScreen() {
+  const { width } = useWindowDimensions();
+  const { t } = useI18n();
+  const wide = width >= 900;
+  const [presets, setPresets] = useState<PtzPreset[]>([]);
+  const [light, setLight] = useState<LightState | null>(null);
+  const [detection, setDetection] = useState<DetectionState | null>(null);
+  const [sirenEnabled, setSirenEnabled] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const getClient = useCallback(async () => {
+    const client = await getCameraClient();
+    if (!client) throw new Error(t('simple.missingCamera'));
+    return client;
   }, []);
 
-  const handleAddCamera = async (connection: CameraConnection) => {
-    await saveCameraSettings(connection);
-    setCamera(connection);
-    setAddCameraVisible(false);
+  const perform = useCallback(async (action: (client: ReolinkClient) => Promise<void>) => {
+    try {
+      setLoading(true);
+      const client = await getClient();
+      await action(client);
+    } catch (error) {
+      Alert.alert(t('error.controlsTitle'), localizedError(error, t));
+    } finally {
+      setLoading(false);
+    }
+  }, [getClient]);
+
+  const refresh = useCallback(() => perform(async (client) => {
+    const [nextPresets, nextLight, nextDetection] = await Promise.all([
+      client.ptz.getPresets(), client.light.get(), client.detection.getState(),
+    ]);
+    setPresets(nextPresets);
+    setLight(nextLight);
+    setDetection(nextDetection);
+  }), [perform]);
+
+  useEffect(() => {
+    void loadCameraSettings().then((settings) => {
+      if (settings) void refresh();
+    });
+  }, [refresh]);
+
+  const toggleLight = () => {
+    if (!light) return;
+    void perform(async (client) => {
+      const enabled = !light.enabled;
+      await client.light.set({ enabled, brightness: light.brightness });
+      setLight({ ...light, enabled });
+    });
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      t('home.logoutTitle'),
-      t('home.logoutConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('home.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            await clearCameraSettings();
-            setCamera(null);
-          },
-        },
-      ],
-    );
-  };
+  const toggleSiren = () => perform(async (client) => {
+    const enabled = !sirenEnabled;
+    await client.siren.set(enabled);
+    setSirenEnabled(enabled);
+  });
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>{t('home.title')}</Text>
-            </View>
-          </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>{t('simple.title')}</Text>
+        </View>
+        <View style={styles.headerActions}>
+        <Pressable onPress={() => router.push('/settings')} style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={t('home.settings')}>
+          <SymbolView name={{ ios: 'gearshape.fill', android: 'settings', web: 'settings' }} tintColor={colors.ink} size={21} />
+        </Pressable>
+        <Pressable onPress={() => void refresh()} style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]} accessibilityRole="button">
+          <SymbolView name={{ ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' }} tintColor="#fff" size={18} />
+          <Text style={styles.refreshText}>{t('simple.refresh')}</Text>
+        </Pressable>
+        </View>
+      </View>
 
-          {camera ? (
-            <View style={styles.cameraCard}>
-              <View style={styles.cardTopline}>
-                <View style={styles.cameraIcon}><Text style={styles.cameraIconText}>◉</Text></View>
-                <View style={styles.connectedBadge}><View style={styles.connectedDot} /><Text style={styles.connectedText}>{t('home.connected')}</Text></View>
-              </View>
-              <Text style={styles.cameraName}>{camera.host}</Text>
-              <Text style={styles.cameraMeta}>{camera.https ? 'HTTPS' : 'HTTP'} · port {camera.port} · {camera.username}</Text>
-              <View style={styles.cardDivider} />
-              <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]} onPress={() => setAddCameraVisible(true)}>
-                <Text style={styles.secondaryButtonText}>{t('home.replace')}</Text>
-              </Pressable>
-              <Pressable style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]} onPress={handleLogout}>
-                <Text style={styles.logoutButtonText}>{t('home.logout')}</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>+</Text></View>
-              <Text style={styles.emptyTitle}>{t('home.noCamera')}</Text>
-              <Text style={styles.emptyDescription}>{t('home.empty')}</Text>
-              <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]} onPress={() => setAddCameraVisible(true)}>
-                <Text style={styles.primaryButtonText}>{t('home.add')}</Text>
-                <Text style={styles.primaryButtonArrow}>→</Text>
-              </Pressable>
-            </View>
-          )}
+      <View style={[styles.content, wide && styles.wideContent]}>
+        <View style={[styles.cameraCard, wide && styles.wideCamera]}>
+          <CameraStream />
+        </View>
+        <ScrollView style={[styles.controlsScroll, wide && styles.wideControls]} contentContainerStyle={styles.controls} showsVerticalScrollIndicator={false}>
+          {loading && <View style={styles.loading}><ActivityIndicator color={colors.accent} /><Text style={styles.muted}>{t('simple.updating')}</Text></View>}
 
-          <View style={styles.languageCard}>
-            <Text style={styles.languageLabel}>{t('home.language')}</Text>
-            <View style={styles.languageChoices}>
-              {(['en', 'de'] as const).map((option) => (
-                <Pressable key={option} onPress={() => setLanguage(option)} style={[styles.languageChoice, language === option && styles.languageChoiceSelected]}>
-                  <Text style={[styles.languageChoiceText, language === option && styles.languageChoiceTextSelected]}>{option === 'en' ? t('home.english') : t('home.german')}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
+          <Panel title={t('simple.ptz')}>
+            {presets.length ? presets.map((preset) => (
+              <ActionButton key={preset.id} title={preset.name} icon={{ ios: 'mappin.and.ellipse', android: 'bookmark', web: 'bookmark' }} onPress={() => void perform((client) => client.ptz.gotoPreset(preset.id))} />
+            )) : <Text style={styles.muted}>{t('simple.noPresets')}</Text>}
+          </Panel>
+
+          <Panel title={t('simple.controls')}>
+            <ActionButton title={sirenEnabled ? t('simple.sirenOff') : t('simple.sirenOn')} icon={{ ios: 'speaker.wave.3.fill', android: 'notifications_active', web: 'notifications_active' }} detail={sirenEnabled ? t('common.on') : t('common.off')} onPress={() => void toggleSiren()} />
+            <ActionButton title={light ? (light.enabled ? t('simple.lightOff') : t('simple.lightOn')) : t('simple.lightUnavailable')} icon={{ ios: 'lightbulb.fill', android: 'lightbulb', web: 'lightbulb' }} detail={light ? (light.enabled ? t('common.on') : t('common.off')) : '—'} onPress={toggleLight} disabled={!light} />
+          </Panel>
+
+          <Panel title={t('simple.sensors')}>
+            <Sensor label={t('simple.motion')} active={detection?.motion} />
+            <Sensor label={t('simple.person')} active={detection?.person} />
+          </Panel>
+          <Text style={styles.note}>{t('simple.sensorNote')}</Text>
         </ScrollView>
-        <AddCamera visible={addCameraVisible} onClose={() => setAddCameraVisible(false)} onAdd={handleAddCamera} />
-      </SafeAreaView>
-    </ThemedView>
+      </View>
+    </SafeAreaView>
   );
 }
 
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return <View style={styles.panel}><Text style={styles.panelTitle}>{title}</Text><View style={styles.panelContent}>{children}</View></View>;
+}
+
+function ActionButton({ title, detail, icon, onPress, disabled }: { title: string; detail?: string; icon: SymbolViewProps['name']; onPress: () => void; disabled?: boolean }) {
+  return <Pressable disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed, disabled && styles.disabled]}>
+    <View style={styles.actionLabel}><SymbolView name={icon} tintColor={colors.accent} size={19} /><Text style={styles.actionText}>{title}</Text></View>{detail && <Text style={styles.actionDetail}>{detail}</Text>}
+  </Pressable>;
+}
+
+function Sensor({ label, active }: { label: string; active?: boolean }) {
+  const { t } = useI18n();
+  return <View style={styles.sensorRow}><Text style={styles.sensorLabel}>{label}</Text><Text style={[styles.sensorState, active && styles.sensorActive]}>{active === undefined ? t('simple.unknown') : active ? t('simple.detected') : t('simple.clear')}</Text></View>;
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  safeArea: {
-    flex: 1,
-    width: '100%',
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 36,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 28,
-  },
-  kicker: {
-    marginBottom: 8,
-    color: '#002c9c',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  title: {
-    color: '#20241f',
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    marginTop: 7,
-    color: '#77796f',
-    fontSize: 15,
-  },
-  liveDot: {
-    width: 12,
-    height: 12,
-    marginTop: 8,
-    borderRadius: 6,
-    backgroundColor: '#002791',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 58,
-    borderWidth: 1,
-    borderColor: '#e2ddd2',
-    borderRadius: 24,
-    backgroundColor: '#f7f7f691',
-  },
-  emptyIcon: {
-    width: 66,
-    height: 66,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 22,
-    borderRadius: 33,
-    backgroundColor: '#4692dd',
-  },
-  emptyIconText: {
-    marginTop: -4,
-    color: '#f6f9fe',
-    fontSize: 34,
-    fontWeight: '700',
-  },
-  emptyTitle: {
-    color: '#20241f',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  emptyDescription: {
-    maxWidth: 280,
-    marginTop: 10,
-    color: '#77796f',
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  primaryButton: {
-    minWidth: 190,
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 28,
-    paddingHorizontal: 22,
-    borderRadius: 14,
-    backgroundColor: '#004bc3',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  primaryButtonArrow: {
-    color: '#fff',
-    fontSize: 22,
-  },
-  cameraCard: {
-    padding: 22,
-    borderRadius: 24,
-    backgroundColor: '#20241f',
-  },
-  cardTopline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cameraIcon: {
-    width: 42,
-    height: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: '#3b4038',
-  },
-  cameraIconText: {
-    color: '#9ba4f0',
-    fontSize: 22,
-  },
-  connectedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  connectedDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#86c59c',
-  },
-  connectedText: {
-    color: '#a9d1b4',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  cameraName: {
-    marginTop: 24,
-    color: '#f7f7f691',
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  cameraMeta: {
-    marginTop: 7,
-    color: '#aeb2a8',
-    fontSize: 14,
-  },
-  cardDivider: {
-    height: 1,
-    marginVertical: 22,
-    backgroundColor: '#3b4038',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    paddingVertical: 3,
-  },
-  secondaryButtonText: {
-    color: '#9ba2f0',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  logoutButton: {
-    alignItems: 'center',
-    marginTop: 16,
-    paddingVertical: 3,
-  },
-  logoutButtonText: {
-    color: '#232cb0',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  footerNote: {
-    marginTop: 'auto',
-    paddingTop: 28,
-    color: '#9a988e',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  languageCard: {
-    marginTop: 28,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#e2ddd2',
-    borderRadius: 14,
-    backgroundColor: '#f7f7f691',
-  },
-  languageLabel: { color: '#20241f', fontSize: 14, fontWeight: '700' },
-  languageChoices: { flexDirection: 'row', gap: 6 },
-  languageChoice: { minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10 },
-  languageChoiceSelected: { backgroundColor: '#20241f' },
-  languageChoiceText: { color: '#77796f', fontSize: 13, fontWeight: '700' },
-  languageChoiceTextSelected: { color: '#f7f7f691' },
-  pressed: {
-    opacity: 0.75,
-  },
+  safeArea: { flex: 1, backgroundColor: colors.canvas },
+  header: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  settingsButton: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 15, backgroundColor: '#eeeeed' },
+  kicker: { color: colors.accent, fontSize: 11, fontWeight: '800', letterSpacing: 2 },
+  title: { color: colors.ink, fontSize: 28, fontWeight: '800', marginTop: 3 },
+  refreshButton: { minHeight: 56, minWidth: 120, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingHorizontal: 20, borderRadius: 15, backgroundColor: colors.ink },
+  refreshText: { color: '#fffefa', fontSize: 16, fontWeight: '700' },
+  content: { flex: 1, paddingHorizontal: 16, paddingBottom: 12 },
+  wideContent: { flexDirection: 'row', gap: 18, paddingHorizontal: 24 },
+  cameraCard: { width: '100%', alignSelf: 'center', overflow: 'hidden', borderTopLeftRadius: 0, borderTopRightRadius: 0, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, backgroundColor: '#000' },
+  wideCamera: { flex: 1, alignSelf: 'center', maxWidth: 1500 },
+  controlsScroll: { flex: 1 },
+  wideControls: { flexGrow: 0, width: 330, flex: 0 },
+  controls: { gap: 12, paddingTop: 14, paddingBottom: 20 },
+  loading: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
+  muted: { color: colors.muted, fontSize: 14 },
+  panel: { padding: 16, borderRadius: 17, borderColor: colors.line, borderWidth: 1, backgroundColor: colors.card },
+  panelTitle: { color: colors.ink, fontSize: 17, fontWeight: '800', marginBottom: 12 },
+  panelContent: { gap: 9 },
+  actionButton: { minHeight: 60, paddingHorizontal: 17, borderRadius: 14, backgroundColor: '#efeff0b4', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  actionLabel: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  actionText: { flexShrink: 1, color: colors.ink, fontSize: 16, fontWeight: '700' },
+  actionDetail: { color: colors.accent, fontSize: 14, fontWeight: '800', marginLeft: 8 },
+  pressed: { opacity: 0.72 },
+  disabled: { opacity: 0.55 },
+  sensorRow: { minHeight: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sensorLabel: { color: colors.ink, fontSize: 14, fontWeight: '600' },
+  sensorState: { color: colors.muted, fontSize: 13, fontWeight: '700' },
+  sensorActive: { color: colors.good },
+  note: { color: colors.muted, fontSize: 12, textAlign: 'center', paddingBottom: 6 },
 });

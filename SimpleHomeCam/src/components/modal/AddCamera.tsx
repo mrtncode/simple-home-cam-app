@@ -8,14 +8,15 @@ import {
 	ScrollView,
 	StyleSheet,
 	Switch,
-	Text,
 	TextInput,
 	View,
 } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 
 import { ReolinkClient } from '@/utils/reolink';
 import { SavedCameraSettings } from '@/utils/cameraSettings';
 import { localizedError, useI18n } from '@/utils/i18n';
+import { ScaledText as Text, useFontSize } from '@/utils/font-size';
 
 export type CameraConnection = SavedCameraSettings & {
 	client: ReolinkClient;
@@ -118,8 +119,8 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 							<Text style={styles.eyebrow}>{t('setup.eyebrow')}</Text>
 							<Text style={styles.title}>{t('setup.title')}</Text>
 						</View>
-						<Pressable onPress={close} disabled={saving} style={styles.closeButton}>
-							<Text style={styles.closeText}>×</Text>
+						<Pressable onPress={close} disabled={saving} style={styles.closeButton} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
+							<SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} tintColor="#55584f" size={18} />
 						</Pressable>
 					</View>
 
@@ -181,9 +182,10 @@ export function AddCamera({ visible, onClose, onAdd }: AddCameraProps) {
 							onPress={submit}
 							disabled={saving}
 						>
-							{saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>{t('setup.connect')}</Text>}
+							{saving ? <ActivityIndicator color="#fff" /> : <View style={styles.buttonContent}><SymbolView name={{ ios: 'link', android: 'link', web: 'link' }} tintColor="#fff" size={18} /><Text style={styles.addButtonText}>{t('setup.connect')}</Text></View>}
 						</Pressable>
 						<Pressable onPress={close} disabled={saving} style={styles.cancelButton}>
+							<SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} tintColor="#686b62" size={15} />
 							<Text style={styles.cancelText}>{t('common.cancel')}</Text>
 						</Pressable>
 					</ScrollView>
@@ -205,10 +207,11 @@ type FieldProps = {
 };
 
 function Field({ label, ...props }: FieldProps) {
+	const { fontScale } = useFontSize();
 	return (
 		<View style={styles.field}>
 			<Text style={styles.fieldLabel}>{label}</Text>
-			<TextInput {...props} style={styles.input} placeholderTextColor="#9b958a" />
+		<TextInput {...props} style={[styles.input, { fontSize: 16 * fontScale }]} placeholderTextColor="#9b958a" />
 		</View>
 	);
 }
@@ -245,18 +248,12 @@ const styles = StyleSheet.create({
 		fontWeight: '800',
 	},
 	closeButton: {
-		width: 36,
-		height: 36,
+		width: 48,
+		height: 48,
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderRadius: 18,
 		backgroundColor: '#e9e4d9',
-	},
-	closeText: {
-		marginTop: -3,
-		color: '#55584f',
-		fontSize: 28,
-		fontWeight: '300',
 	},
 	content: {
 		gap: 16,
@@ -313,24 +310,33 @@ const styles = StyleSheet.create({
 		lineHeight: 19,
 	},
 	addButton: {
-		minHeight: 54,
+		minHeight: 64,
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderRadius: 14,
 		backgroundColor: '#cf5c36',
 	},
+	buttonContent: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 9,
+	},
 	addButtonText: {
 		color: '#fff',
-		fontSize: 16,
+		fontSize: 18,
 		fontWeight: '800',
 	},
 	cancelButton: {
+		flexDirection: 'row',
 		alignItems: 'center',
-		paddingVertical: 4,
+		justifyContent: 'center',
+		gap: 7,
+		minHeight: 48,
+		paddingVertical: 8,
 	},
 	cancelText: {
 		color: '#686b62',
-		fontSize: 14,
+		fontSize: 16,
 		fontWeight: '700',
 	},
 	pressed: {
